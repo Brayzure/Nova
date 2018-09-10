@@ -37,6 +37,45 @@ const unwatch = {
     }
 }
 
+const enable = {
+    commandName: "enable",
+    descripton: "Enables a watchlist alert for the server.",
+    permissions: [ "manageGuild" ],
+    run: async function({ args, guildManager }) {
+        const alert = args[0].toLowerCase();
+        if(!alertFunctionMap[alert]) {
+            throw new Error(`Alert **${alert}** not found.`);
+        }
+        const enabledAlerts = guildManager.state.alert.enabledAlerts;
+        if(enabledAlerts.includes(alert)) {
+            throw new Error("Alert is already enabled!");
+        }
+        enabledAlerts.push(alert);
+        await guildManager.stateManager.saveState();
+        return `Successfully enabled **${alert}** alert!`;
+    }
+}
+
+const disable = {
+    commandName: "disable",
+    descripton: "Disables a watchlist alert for the server.",
+    permissions: [ "manageGuild" ],
+    run: async function({ args, guildManager }) {
+        const alert = args[0].toLowerCase();
+        if(!alertFunctionMap[alert]) {
+            throw new Error(`Alert **${alert}** not found.`);
+        }
+        const enabledAlerts = guildManager.state.alert.enabledAlerts;
+        if(!enabledAlerts.includes(alert)) {
+            throw new Error("Alert is already disabled!");
+        }
+        const alertIndex = enabledAlerts.indexOf(alert);
+        enabledAlerts.splice(alertIndex, 1);
+        await guildManager.stateManager.saveState();
+        return `Successfully disabled **${alert}** alert!`;
+    }
+}
+
 function onMessage(message) {
     const alertChannelID = message.channel.guild.guildManager.state.alert.alertChannel;
     const alertChannel = message.channel.guild.channels.get(alertChannelID);
@@ -66,6 +105,7 @@ function onMessage(message) {
         const embed = {
             title: (triggeredAlerts.length === 1 ? "Alert" : "Alerts") + " Triggered",
             description,
+            color: 0xffa500,
             fields: [{
                 name: "Author",
                 value: authorFullInfo,
@@ -77,7 +117,7 @@ function onMessage(message) {
                 inline: true
             }],
             footer: {
-                text: `Timestamp: ${(new Date().toUTCString())}`
+                text: `Timestamp: ${(new Date()).toUTCString()}`
             }
         }
         alertChannel.createMessage({ embed });
@@ -113,7 +153,9 @@ module.exports = {
     commands: {
         setalert,
         watch,
-        unwatch
+        unwatch,
+        enable,
+        disable
     },
     ensureState: {
         enabledAlerts: [ "watchlist" ],
