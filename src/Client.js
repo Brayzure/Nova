@@ -29,7 +29,7 @@ class Client {
 
     onMessage(message) {
         if(!this.guilds.has(message.channel.guild.id)) {
-            this.guilds.set(message.channel.guild.id, new GuildManager(message.channel.guild));
+            this.guilds.set(message.channel.guild.id, new GuildManager(this, message.channel.guild));
         }
 
         const guildManager = this.guilds.get(message.channel.guild.id);
