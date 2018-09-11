@@ -1,0 +1,26 @@
+{
+  "name": "nova",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "eris": "^0.9.0",
+    "fs-extra": "^7.0.0",
+    "events": "^3.0.0",
+    "md5": "^2.2.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Brayzure/Nova.git"
+  },
+  "author": "Tyler Ricketts (Brayzure)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Brayzure/Nova/issues"
+  },
+  "homepage": "https://github.com/Brayzure/Nova#readme"
+}
