@@ -67,10 +67,10 @@ class GuildManager extends EventEmitter {
     }
 
     handleEvents(event) {
-        return function handle(args) {
+        return function handle(...args) {
             const handlers = this.handlers[event];
             handlers.forEach((handler) => {
-                handler(args);
+                handler(...args);
             });
         }
     }

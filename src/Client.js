@@ -11,7 +11,8 @@ class Client {
         this.guilds = new Map;
 
         this.discordClient.on("ready", this.onReady.bind(this));
-        this.discordClient.on("messageCreate", this.onMessage.bind(this));
+        this.discordClient.on("messageCreate", this.onEvent.bind(this, "messageCreate"));
+        this.discordClient.on("messageReactionAdd", this.onEvent.bind(this, "messageReactionAdd"));
         this.discordClient.on("guildCreate", this.onGuildJoin.bind(this));
     }
 
@@ -27,13 +28,22 @@ class Client {
         logger.log("All guild managers initialized");
     }
 
-    onMessage(message) {
-        if(!this.guilds.has(message.channel.guild.id)) {
-            this.guilds.set(message.channel.guild.id, new GuildManager(this, message.channel.guild));
+    onEvent(event, ...args) {
+        let guild;
+        switch(event) {
+            case "messageCreate":
+                guild = args[0].channel.guild;
+                break;
+            case "messageReactionAdd":
+                guild = args[0].channel.guild;
+                break;
+        }
+        if(!this.guilds.has(guild.id)) {
+            this.guilds.set(guild.id, new GuildManager(this, guild));
         }
 
-        const guildManager = this.guilds.get(message.channel.guild.id);
-        guildManager.emit("messageCreate", message);
+        const guildManager = this.guilds.get(guild.id);
+        guildManager.emit(event, ...args);
     }
 
     onGuildJoin(guild) {

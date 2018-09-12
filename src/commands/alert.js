@@ -1,3 +1,9 @@
+const Eris = require("eris");
+
+const REACTIONS = {
+    DELETE: "🗑"
+};
+
 const setalert = {
     commandName: "setalert",
     description: "Sets the current channel as the alerts channel",
@@ -76,7 +82,34 @@ const disable = {
     }
 }
 
-function onMessage(message) {
+async function onReaction(message, reaction, userID) {
+    const alertChannelID = message.channel.guild.guildManager.state.alert.alertChannel;
+    const alertChannel = message.channel.guild.channels.get(alertChannelID);
+    if(!alertChannel || message.channel.id !== alertChannel.id) {
+        return;
+    }
+    const guild = message.channel.guild;
+    const member = guild.members.get(userID);
+    if(!member.permission.has("manageMessages")) {
+        return;
+    }
+    if(!(message instanceof Eris.Message)) {
+        message = await message.channel.getMessage(message.id);
+    }
+    if(!message || !message.embeds.length || !message.embeds[0].description
+        || message.author.id === userID)
+    {
+        return;
+    }
+    const meta = message.embeds[0].description.split("/");
+    const targetChannel = guild.channels.get(meta[meta.length-2]);
+    if(!targetChannel) {
+        return;
+    }
+    await targetChannel.deleteMessage(meta[meta.length-1]);
+}
+
+async function onMessage(message) {
     const alertChannelID = message.channel.guild.guildManager.state.alert.alertChannel;
     const alertChannel = message.channel.guild.channels.get(alertChannelID);
     if(!alertChannel) {
@@ -117,20 +150,12 @@ function onMessage(message) {
                 inline: true
             }],
             footer: {
-                text: `Timestamp: ${(new Date()).toUTCString()}`
+                text: "Timestamp: " + (new Date()).toUTCString()
             }
         }
-        alertChannel.createMessage({ embed });
+        const newMessage = await alertChannel.createMessage({ embed });
+        newMessage.addReaction(REACTIONS.DELETE);
     }
-}
-
-function checkCondition(message, condition) {
-    switch(condition) {
-        case "watchlist":
-            return checkWatchlist(message);
-            break;
-    }
-    return false;
 }
 
 function checkWatchlist(message) {
@@ -142,7 +167,7 @@ function checkWatchlist(message) {
 
 const alertFunctionMap = {
     watchlist: checkWatchlist
-}
+};
 
 module.exports = {
     moduleName: "Alerts Manager",
@@ -163,6 +188,7 @@ module.exports = {
         watchlist: []
     },
     events: {
-        messageCreate: onMessage
+        messageCreate: onMessage,
+        messageReactionAdd: onReaction
     }
 }
