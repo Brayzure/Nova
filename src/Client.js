@@ -1,6 +1,8 @@
 const Eris = require("eris");
 
 const GuildManager = require("./GuildManager.js");
+const StatusClient = require("./StatusClient.js");
+const config = require("../config/config.json");
 const logger = console;
 
 class Client {
@@ -9,6 +11,10 @@ class Client {
         this.options = options;
         this.discordClient = new Eris(token, options);
         this.guilds = new Map;
+
+        if(config.statusHost) {
+            this.statusClient = new StatusClient(config.statusHost);
+        }
 
         this.discordClient.on("ready", this.onReady.bind(this));
         this.discordClient.on("messageCreate", this.onEvent.bind(this, "messageCreate"));
