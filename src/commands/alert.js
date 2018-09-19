@@ -1,7 +1,8 @@
 const Eris = require("eris");
 
 const REACTIONS = {
-    DELETE: "🗑"
+    DELETE: "🗑",
+    CLEAR: "✅"
 };
 
 const setalert = {
@@ -100,9 +101,9 @@ const watchlist = {
 }
 
 async function onReaction(message, reaction, userID) {
-    const alertChannelID = message.channel.guild.guildManager.state.alert.alertChannel;
-    const alertChannel = message.channel.guild.channels.get(alertChannelID);
-    if(!alertChannel || message.channel.id !== alertChannel.id) {
+    const guildManager = message.channel.guild.guildManager;
+    if(!Object.values(REACTIONS).includes(reaction.name)
+        || !guildManager.state.alert.unresolvedAlerts[message.id]) {
         return;
     }
     const guild = message.channel.guild;
@@ -118,13 +119,27 @@ async function onReaction(message, reaction, userID) {
     {
         return;
     }
-    const meta = message.embeds[0].description.split("/");
-    const targetChannel = guild.channels.get(meta[meta.length-2]);
-    if(!targetChannel) {
-        return;
+    switch(reaction.name) {
+        case REACTIONS.DELETE:
+            const metadata = guildManager.state.alert.unresolvedAlerts[message.id];
+            if(!metadata) {
+                return;
+            }
+            const targetChannel = guild.channels.get(metadata.channel);
+            if(!targetChannel) {
+                return;
+            }
+            await clearAlert(guildManager, message.id);
+            await targetChannel.deleteMessage(metadata.id);
+            await message.delete();
+            break;
+        case REACTIONS.CLEAR:
+            await clearAlert(guildManager, message.id);
+            await message.delete();
+            break;
+        default:
+            throw new Error(`Reaction ${reaction.name} present in object, but not handled.`);
     }
-    await targetChannel.deleteMessage(meta[meta.length-1]);
-    await message.delete();
 }
 
 async function onMessage(message) {
@@ -175,7 +190,21 @@ async function onMessage(message) {
             }
         }
         const newMessage = await alertChannel.createMessage({ embed });
-        newMessage.addReaction(REACTIONS.DELETE);
+        message.channel.guild.guildManager.state.alert.unresolvedAlerts[newMessage.id] = {
+            channel: message.channel.id,
+            id: message.id
+        }
+        await message.channel.guild.guildManager.stateManager.saveState();
+        for(reaction of Object.values(REACTIONS)) {
+            newMessage.addReaction(reaction);
+        }
+    }
+}
+
+async function clearAlert(guildManager, alertID) {
+    if(guildManager.state.alert.unresolvedAlerts[alertID]) {
+        delete guildManager.state.alert.unresolvedAlerts[alertID];
+        await guildManager.stateManager.saveState();
     }
 }
 
@@ -207,7 +236,8 @@ module.exports = {
     ensureState: {
         enabledAlerts: [ "watchlist" ],
         alertChannel: "",
-        watchlist: []
+        watchlist: [],
+        unresolvedAlerts: {}
     },
     events: {
         messageCreate: onMessage,
