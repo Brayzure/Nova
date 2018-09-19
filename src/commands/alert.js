@@ -107,9 +107,13 @@ async function onReaction(message, reaction, userID) {
         return;
     }
     await targetChannel.deleteMessage(meta[meta.length-1]);
+    await message.delete();
 }
 
 async function onMessage(message) {
+    if(message.member.permission.has("manageMessages")) {
+        return;
+    }
     const alertChannelID = message.channel.guild.guildManager.state.alert.alertChannel;
     const alertChannel = message.channel.guild.channels.get(alertChannelID);
     if(!alertChannel) {
