@@ -4,7 +4,7 @@ class CommandHandler {
     constructor(guild, options = {}) {
         this.guild = guild;
         this.client = this.guild.client;
-        this.prefix = options.prefix || config.prefix;
+        this.prefix = options.state.prefix || config.prefix;
         this.commands = new Map;
         this.modules = new Map;
         this.enableBaseModule();

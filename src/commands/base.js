@@ -131,6 +131,32 @@ const clear = {
     }
 }
 
+const set = {
+    commandName: "set",
+    description: "Modifies internal settings",
+    permissions: [ "manageGuild" ],
+    run: async function({ args, guildManager }) {
+        if(args.length < 2) {
+            throw new Error("Improper arguments, do `set [setting] [value]`");
+        }
+        switch(args[0].toLowerCase()) {
+            case "prefix":
+            case "literal":
+                if(!args[1]) {
+                    throw new Error("Invalid prefix, make sure you don't have extra spaces!");
+                }
+                guildManager.state.prefix = args[1];
+                await guildManager.stateManager.saveState();
+                guildManager.commandHandler.prefix = args[1];
+                return `Set prefix to **${args[1]}**!`;
+                break;
+            default:
+                throw new Error(`Didn't recognize setting **${args[0].toLowerCase()}**!`);
+                break;
+        }
+    }
+}
+
 function moduleSummaryEmbed(tempModule, loaded) {
     let embed = {
         color: 0xaaaaff,
@@ -193,7 +219,8 @@ module.exports = {
         ping,
         enable,
         disable,
-        clear
+        clear,
+        set
     },
     ensureState: {}
 }

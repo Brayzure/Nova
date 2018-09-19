@@ -10,8 +10,8 @@ class GuildManager extends EventEmitter {
         this.cache = guild;
         this.cache.guildManager = this;
         this.client = client;
-        this.commandHandler = new CommandHandler(this);
         this.stateManager = new StateManager(guild.id);
+        this.commandHandler = new CommandHandler(this, { state: this.state });
 
         this.handlers = {};
 
