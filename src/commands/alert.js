@@ -82,6 +82,23 @@ const disable = {
     }
 }
 
+const watchlist = {
+    commandName: "watchlist",
+    description: "Lists every word currently on the watchlist",
+    permissions: [ "manageMessages" ],
+    run: async function({ guildManager }) {
+        const list = guildManager.state.alert.watchlist;
+        let str = "**Current Watchlist**\n";
+        if(list.length) {
+            str += list.join("\n");
+        }
+        else {
+            str += "*Nothing*";
+        }
+        return str;
+    }
+}
+
 async function onReaction(message, reaction, userID) {
     const alertChannelID = message.channel.guild.guildManager.state.alert.alertChannel;
     const alertChannel = message.channel.guild.channels.get(alertChannelID);
@@ -184,7 +201,8 @@ module.exports = {
         watch,
         unwatch,
         enable,
-        disable
+        disable,
+        watchlist
     },
     ensureState: {
         enabledAlerts: [ "watchlist" ],
