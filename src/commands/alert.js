@@ -166,8 +166,7 @@ async function onMessage(message) {
             message.id
         ]
         const jumpLink = jumpLinkArgs.join("/");
-        const description = "**Text:** " + message.cleanContent
-            + "\n**Jump Link:** " + jumpLink;
+        const description = "**Text:** " + message.cleanContent;
         const authorFullInfo = message.author.username + "#"
             + message.author.discriminator + " (ID: "
             + message.author.id + ")";
@@ -176,6 +175,10 @@ async function onMessage(message) {
             description,
             color: 0xffa500,
             fields: [{
+                name: "Jump Link",
+                value: jumpLink,
+                inline: false
+            },{
                 name: "Author",
                 value: authorFullInfo,
                 inline: true
