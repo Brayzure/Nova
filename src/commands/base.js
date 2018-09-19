@@ -110,7 +110,7 @@ const help = {
             message.channel.createMessage({ embed });
         }
         else {
-            throw new Error("Improper arguments, do `help [module] [command]` or `pls help [module]`");
+            throw new Error("Improper arguments, do `help [module] [command]` or `help [module]`");
         }
     }
 }
