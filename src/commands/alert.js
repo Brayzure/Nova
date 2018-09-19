@@ -153,10 +153,16 @@ async function onMessage(message) {
     }
     const enabledAlerts = message.channel.guild.guildManager.state.alert.enabledAlerts;
     const triggeredAlerts = [];
-    enabledAlerts.forEach((alert) => {
+    const terms = [];
+    for(const alert of enabledAlerts) {
         const triggered = alertFunctionMap[alert](message);
-        if(triggered) triggeredAlerts.push(alert);
-    });
+        if(triggered) {
+            triggeredAlerts.push(alert);
+            if(typeof triggered !== "boolean") {
+                terms.push(triggered);
+            }
+        }
+    }
 
     if(triggeredAlerts.length) {
         const jumpLinkArgs = [
@@ -192,6 +198,13 @@ async function onMessage(message) {
                 text: "Timestamp: " + (new Date()).toUTCString()
             }
         }
+        if(terms) {
+            embed.fields.push({
+                name: "Blocked Terms Found",
+                value: terms.join(", "),
+                inline: true
+            });
+        }
         const newMessage = await alertChannel.createMessage({ embed });
         message.channel.guild.guildManager.state.alert.unresolvedAlerts[newMessage.id] = {
             channel: message.channel.id,
@@ -213,9 +226,12 @@ async function clearAlert(guildManager, alertID) {
 
 function checkWatchlist(message) {
     const watchlist = message.channel.guild.guildManager.state.alert.watchlist;
-    return watchlist.some((term) => {
-        return message.content.toLowerCase().includes(term);
-    });
+    for(term of watchlist) {
+        if(message.content.toLowerCase().includes(term)) {
+            return term;
+        }
+    }
+    return false;
 }
 
 const alertFunctionMap = {
