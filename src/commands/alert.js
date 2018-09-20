@@ -20,7 +20,7 @@ const watch = {
     commandName: "watch",
     description: "Watches for a term or phrase.",
     permissions: [ "manageGuild" ],
-    run: async function({ message, args, guildManager }) {
+    run: async function({ args, guildManager }) {
         const term = args.join(" ").toLowerCase();
         guildManager.state.alert.watchlist.push(term);
         await guildManager.stateManager.saveState();
@@ -32,7 +32,7 @@ const unwatch = {
     commandName: "unwatch",
     description: "Removes a term from the watchlist.",
     permissions: [ "manageGuild" ],
-    run: async function({ message, args, guildManager }) {
+    run: async function({ args, guildManager }) {
         const term = args.join(" ").toLowerCase();
         const index = guildManager.state.alert.watchlist.indexOf(term);
         if(index !== -1) {
