@@ -119,7 +119,7 @@ const clear = {
     commandName: "clear",
     description: "Clears internal module cache",
     permissions: [ "developer" ],
-    run: async function({ args }) {
+    run: async function({ args, guildManager }) {
         if(!args[0]) {
             throw new Error("Please specify a module.");
         }
@@ -127,6 +127,10 @@ const clear = {
         const moduleName = args[0].toLowerCase();
         const location = path.join(__dirname, `./${moduleName}.js`);
         delete require.cache[require.resolve(location)];
+        if(guildManager.state.enabledModules.includes(moduleName)) {
+            await guildManager.commandHandler.disableCustomModule(moduleName);
+            await guildManager.commandHandler.enableCustomModule(moduleName);
+        }
         return `Cleared cache for ${moduleName}.`;
     }
 }
