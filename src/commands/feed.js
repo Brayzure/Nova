@@ -21,7 +21,7 @@ const create = {
         await guildManager.stateManager.saveState();
         return `Created new feed role **${role.name}**, you may edit the new role freely.`;
     }
-}
+};
 
 const deleteRole = {
     commandName: "delete",
@@ -51,7 +51,7 @@ const deleteRole = {
             throw new Error("Role not found");
         }
     }
-}
+};
 
 const list = {
     commandName: "list",
@@ -74,10 +74,10 @@ const list = {
             title: "Feed Roles",
             color: 0xaaaaff,
             description: output.length ? output.join("\n") : "None"
-        }
+        };
         message.channel.createMessage({ embed });
     }
-}
+};
 
 const publish = {
     commandName: "publish",
@@ -102,9 +102,9 @@ const publish = {
         await role.edit({mentionable: true});
         await channel.createMessage(`${role.mention}: ${message}`);
         await role.edit({mentionable: false});
-        return `Sent message to feed channel successfully.`;
+        return "Sent message to feed channel successfully.";
     }
-}
+};
 
 const move = {
     commandName: "move",
@@ -120,7 +120,7 @@ const move = {
         guildManager.stateManager.saveState();
         return "Set feed announcement channel to this channel.";
     }
-}
+};
 
 const sub = {
     commandName: "sub",
@@ -142,7 +142,7 @@ const sub = {
         await message.member.addRole(role.id);
         return "Successfully assigned feed role, you can remove it with `unsub`.";
     }
-}
+};
 
 const unsub = {
     commandName: "unsub",
@@ -163,7 +163,7 @@ const unsub = {
         await message.member.removeRole(roleID);
         return "Successfully remove feed role.";
     }
-}
+};
 
 module.exports = {
     moduleName: "Feed Roles Manager",
@@ -185,4 +185,4 @@ module.exports = {
         roleNameMap: {},
         roleChannelMap: {}
     }
-}
+};

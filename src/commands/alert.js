@@ -12,9 +12,9 @@ const setalert = {
     run: async function({ message, guildManager }) {
         guildManager.state.alert.alertChannel = message.channel.id;
         await guildManager.stateManager.saveState();
-        return "Set the current channel as the alerts channel."
+        return "Set the current channel as the alerts channel.";
     }
-}
+};
 
 const watch = {
     commandName: "watch",
@@ -26,7 +26,7 @@ const watch = {
         await guildManager.stateManager.saveState();
         return `Added ${term} to the watchlist.`;
     }
-}
+};
 
 const unwatch = {
     commandName: "unwatch",
@@ -42,7 +42,7 @@ const unwatch = {
         }
         return `Couldn't find ${term} in the watchlist.`;
     }
-}
+};
 
 const enable = {
     commandName: "enable",
@@ -61,7 +61,7 @@ const enable = {
         await guildManager.stateManager.saveState();
         return `Successfully enabled **${alert}** alert!`;
     }
-}
+};
 
 const disable = {
     commandName: "disable",
@@ -81,7 +81,7 @@ const disable = {
         await guildManager.stateManager.saveState();
         return `Successfully disabled **${alert}** alert!`;
     }
-}
+};
 
 const watchlist = {
     commandName: "watchlist",
@@ -98,7 +98,7 @@ const watchlist = {
         }
         return str;
     }
-}
+};
 
 async function onReaction(message, reaction, userID) {
     const guildManager = message.channel.guild.guildManager;
@@ -120,7 +120,7 @@ async function onReaction(message, reaction, userID) {
         return;
     }
     switch(reaction.name) {
-        case REACTIONS.DELETE:
+        case REACTIONS.DELETE: {
             const metadata = guildManager.state.alert.unresolvedAlerts[message.id];
             if(!metadata) {
                 return;
@@ -135,9 +135,12 @@ async function onReaction(message, reaction, userID) {
             try {
                 await targetChannel.deleteMessage(metadata.id);
             }
-            catch (err) { }
+            catch (err) {
+                // No errors please!
+            }
             await message.delete();
             break;
+        }
         case REACTIONS.CLEAR:
             await clearAlert(guildManager, message.id);
             await message.delete();
@@ -175,7 +178,7 @@ async function onMessage(message) {
             message.channel.guild.id,
             message.channel.id,
             message.id
-        ]
+        ];
         const jumpLink = jumpLinkArgs.join("/");
         const description = "**Text:** " + message.cleanContent;
         const authorFullInfo = message.author.username + "#"
@@ -202,7 +205,8 @@ async function onMessage(message) {
             footer: {
                 text: "Timestamp: " + (new Date()).toUTCString()
             }
-        }
+        };
+
         if(terms) {
             embed.fields.push({
                 name: "Blocked Terms Found",
@@ -214,9 +218,10 @@ async function onMessage(message) {
         message.channel.guild.guildManager.state.alert.unresolvedAlerts[newMessage.id] = {
             channel: message.channel.id,
             id: message.id
-        }
+        };
+
         await message.channel.guild.guildManager.stateManager.saveState();
-        for(reaction of Object.values(REACTIONS)) {
+        for(const reaction of Object.values(REACTIONS)) {
             newMessage.addReaction(reaction);
         }
     }
@@ -231,7 +236,7 @@ async function clearAlert(guildManager, alertID) {
 
 function checkWatchlist(message) {
     const watchlist = message.channel.guild.guildManager.state.alert.watchlist;
-    for(term of watchlist) {
+    for(const term of watchlist) {
         if(message.content.toLowerCase().includes(term)) {
             return term;
         }
@@ -267,4 +272,4 @@ module.exports = {
         messageCreate: onMessage,
         messageReactionAdd: onReaction
     }
-}
+};

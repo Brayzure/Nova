@@ -4,7 +4,7 @@ const path = require("path");
 
 const BASE_STATE = {
     enabledModules: []
-}
+};
 
 class StateManager {
     constructor(guildID) {
@@ -18,7 +18,7 @@ class StateManager {
 
     getState() {
         try {
-            const data = require(this.location)
+            const data = require(this.location);
             this.state = data;
         }
         catch (err) {

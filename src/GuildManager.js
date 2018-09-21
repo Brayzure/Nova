@@ -32,16 +32,16 @@ class GuildManager extends EventEmitter {
         {
             const embed = {
                 color: 0x00ff00
-            }
+            };
             try {
                 const commandResult = await this.commandHandler.run(message);
-                embed.description = commandResult
+                embed.description = commandResult;
             }
             catch (err) {
                 if(err.message !== "COMMAND_NOT_FOUND"
                     && err.message !== "PERMISSION_NOT_MET") {
                     embed.color = 0xff0000;
-                    embed.description = err.message
+                    embed.description = err.message;
                 }
             }
             if(embed.description) {
@@ -72,7 +72,7 @@ class GuildManager extends EventEmitter {
             handlers.forEach((handler) => {
                 handler(...args);
             });
-        }
+        };
     }
 }
 

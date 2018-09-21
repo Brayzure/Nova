@@ -96,7 +96,7 @@ class CommandHandler {
             command.permissions.forEach((perm) => {
                 if(!message.member.permission.has(perm)
                     && (perm === "developer" && message.author.id !== "97771062690865152")) {
-                    throw new Error(`PERMISSION_NOT_MET`);
+                    throw new Error("PERMISSION_NOT_MET");
                 }
             });
         }

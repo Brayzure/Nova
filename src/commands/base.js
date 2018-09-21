@@ -9,7 +9,7 @@ const ping = {
         const shard = message.channel.guild.shard;
         return `Pong! (Latency: ${shard.latency}ms | Shard ${shard.id})`;
     }
-}
+};
 
 const enable = {
     commandName: "enable",
@@ -30,7 +30,7 @@ const enable = {
         await guildManager.stateManager.saveState();
         return `Successfully enabled the ${moduleName} module`;
     }
-}
+};
 
 const disable = {
     commandName: "disable",
@@ -47,7 +47,7 @@ const disable = {
         await guildManager.stateManager.saveState();
         return `Successfully disabled the ${moduleName} module`;
     }
-}
+};
 
 const help = {
     commandName: "help",
@@ -97,7 +97,7 @@ const help = {
             }
             else {
                 let loaded = true;
-                let tempModule = guildManager.commandHandler.modules.get(args[0])
+                let tempModule = guildManager.commandHandler.modules.get(args[0]);
                 if(!tempModule) {
                     loaded = false;
                     tempModule = require(path.join(__dirname, `./${args[0]}.js`));
@@ -113,7 +113,7 @@ const help = {
             throw new Error("Improper arguments, do `help [module] [command]` or `help [module]`");
         }
     }
-}
+};
 
 const clear = {
     commandName: "clear",
@@ -133,7 +133,7 @@ const clear = {
         }
         return `Cleared cache for ${moduleName}.`;
     }
-}
+};
 
 const set = {
     commandName: "set",
@@ -153,13 +153,11 @@ const set = {
                 await guildManager.stateManager.saveState();
                 guildManager.commandHandler.prefix = args[1];
                 return `Set prefix to **${args[1]}**!`;
-                break;
             default:
                 throw new Error(`Didn't recognize setting **${args[0].toLowerCase()}**!`);
-                break;
         }
     }
-}
+};
 
 function moduleSummaryEmbed(tempModule, loaded) {
     let embed = {
@@ -183,7 +181,7 @@ function moduleSummaryEmbed(tempModule, loaded) {
                 inline: true
             }
         ]
-    }
+    };
     return embed;
 }
 
@@ -209,7 +207,7 @@ function commandSummaryEmbed(command, commandModule, loaded=true) {
                 inline: true
             }
         ]
-    }
+    };
     return embed;
 }
 
@@ -227,4 +225,4 @@ module.exports = {
         set
     },
     ensureState: {}
-}
+};
