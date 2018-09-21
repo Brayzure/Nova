@@ -130,7 +130,12 @@ async function onReaction(message, reaction, userID) {
                 return;
             }
             await clearAlert(guildManager, message.id);
-            await targetChannel.deleteMessage(metadata.id);
+            // Message may already be deleted, we don't care if this fails
+            // TODO: Don't proceed if message deletion failed for other reasons (like of permissions)
+            try {
+                await targetChannel.deleteMessage(metadata.id);
+            }
+            catch (err) { }
             await message.delete();
             break;
         case REACTIONS.CLEAR:
