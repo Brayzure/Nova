@@ -5,6 +5,11 @@ const REACTIONS = {
     CLEAR: "✅"
 };
 
+const RESOLUTION_ACTIONS = {
+    DELETE: "Message was deleted",
+    CLEAR: "Message was ignored"
+};
+
 const setalert = {
     commandName: "setalert",
     description: "Sets the current channel as the alerts channel",
@@ -138,12 +143,12 @@ async function onReaction(message, reaction, userID) {
             catch (err) {
                 // No errors please!
             }
-            await message.delete();
+            await resolveAlert(message, RESOLUTION_ACTIONS.DELETE);
             break;
         }
         case REACTIONS.CLEAR:
             await clearAlert(guildManager, message.id);
-            await message.delete();
+            await resolveAlert(message, RESOLUTION_ACTIONS.CLEAR);
             break;
         default:
             throw new Error(`Reaction ${reaction.name} present in object, but not handled.`);
@@ -232,6 +237,19 @@ async function clearAlert(guildManager, alertID) {
         delete guildManager.state.alert.unresolvedAlerts[alertID];
         await guildManager.stateManager.saveState();
     }
+}
+
+async function resolveAlert(message, actionTaken) {
+    const embed = message.embeds[0];
+    embed.color = 0x00ff00;
+    const resolutionField = {
+        name: "Action Taken",
+        value: actionTaken,
+        inline: true
+    };
+    embed.fields.push(resolutionField);
+    embed.title = embed.title.replace("Triggered", "Resolved");
+    await message.edit({ embed });
 }
 
 function checkWatchlist(message) {
