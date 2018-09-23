@@ -12,8 +12,9 @@ class CommandHandler {
 
     enableBaseModule() {
         const baseModule = require("./commands/base.js");
-        Object.keys(baseModule.commands).forEach((commandName) => {
-            this.commands.set(commandName, baseModule.commands[commandName]);
+        Object.values(baseModule.commands).forEach((command) => {
+            this.enableCommand([], command);
+            this.commands.set(command.commandName, command);
         });
         this.modules.set("base", baseModule);
     }
@@ -28,6 +29,7 @@ class CommandHandler {
         });
         Object.keys(customModule.commands).forEach((commandName) => {
             const command = customModule.commands[commandName];
+            this.enableCommand([ moduleName ], command);
             this.commands.set(`${moduleName}-${command.commandName}`, customModule.commands[commandName]);
         });
         // Ensure state variables exist
@@ -46,6 +48,16 @@ class CommandHandler {
         }
         
         this.modules.set(moduleName, customModule);
+    }
+
+    async enableCommand(baseCommandArgs, command) {
+        baseCommandArgs.push(command.commandName);
+        this.commands.set(baseCommandArgs.join("-"), command);
+        if(command.subcommands) {
+            Object.values(command.subcommands).forEach((subcommand) => {
+                this.enableCommand(baseCommandArgs, subcommand);
+            });
+        }
     }
 
     disableCustomModule(moduleName) {
@@ -67,26 +79,26 @@ class CommandHandler {
     async run(message) {
         const messageString = message.content.slice(this.prefix.length);
         const args = messageString.split(" ");
-
+        const commandArgs = args.map(e => e.toLowerCase());
         let startIndex = 0;
-        const commandName = args[0].toLowerCase();
+        let index = 0;
+
+        const overrideCheck = args[0].toLowerCase();
         let override = false;
-        let sliceDepth = 1;
-        if((commandName === "override" || commandName === "o")
+        if((overrideCheck === "override" || overrideCheck === "o")
             && message.author.id === "97771062690865152")
         {
             override = true;
             startIndex = 1;
-            sliceDepth++;
+            index = 1;
         }
 
-        // Check for base commands
-        let command = this.commands.get(args[startIndex]);
-        // No base command, check for custom commands
-        if(!command && args.length > 1) {
-            command = this.commands.get(`${args[startIndex]}-${args[startIndex+1].toLowerCase()}`);
-            sliceDepth++;
+        while(this.commands.get(commandArgs.slice(startIndex, index + 1).join("-")) && index < commandArgs.length) {
+            index++;
         }
+
+        const commandName = commandArgs.slice(startIndex, index).join("-");
+        const command = this.commands.get(commandName);
 
         if(!command) {
             throw new Error("COMMAND_NOT_FOUND");
@@ -103,7 +115,7 @@ class CommandHandler {
 
         const result = await command.run({
             message,
-            args: args.slice(sliceDepth),
+            args: args.slice(index),
             guildManager: this.guild,
             client: this.client
         });
