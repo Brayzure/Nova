@@ -148,13 +148,13 @@ const setPrefix = {
         guildManager.commandHandler.prefix = args[0];
         return `Set prefix to **${args[0]}**!`;
     }
-}
+};
 
 const set = {
     commandName: "set",
     description: "Modifies internal settings",
     permissions: [ "manageGuild" ],
-    run: async function({ args, guildManager }) {
+    run: async function({ args }) {
         if(args.length < 2) {
             throw new Error("Improper arguments, do `set [setting] [value]`");
         }
@@ -163,15 +163,6 @@ const set = {
         prefix: setPrefix
     }
 };
-
-const alert = {
-    commandName: "alert",
-    description: "Internal test command",
-    permissions: [ "manageGuild" ],
-    run: async function({}) {
-        return "Command routing functional.";
-    }
-}
 
 function moduleSummaryEmbed(tempModule, loaded) {
     let embed = {
