@@ -32,6 +32,11 @@ class CommandHandler {
             this.enableCommand([ moduleName ], command);
             this.commands.set(`${moduleName}-${command.commandName}`, customModule.commands[commandName]);
         });
+        if(customModule.baseModifiers) {
+            Object.keys(customModule.baseModifiers).forEach((baseCommand) => {
+                this.enableCommand([ baseCommand ], customModule.baseModifiers[baseCommand]);
+            });
+        }
         // Ensure state variables exist
         if(customModule.ensureState) {
             Object.keys(customModule.ensureState).forEach(async (prop) => {
@@ -60,6 +65,16 @@ class CommandHandler {
         }
     }
 
+    async disableCommand(baseCommandArgs, command) {
+        baseCommandArgs.push(command.commandName);
+        this.commands.delete(baseCommandArgs.join("-"));
+        if(command.subcommands) {
+            Object.values(command.subcommands).forEach((subcommand) => {
+                this.disableCommand(baseCommandArgs, subcommand);
+            });
+        }
+    }
+
     disableCustomModule(moduleName) {
         const customModule = this.modules.get(moduleName);
         if(customModule.events) {
@@ -68,10 +83,14 @@ class CommandHandler {
                 this.guild.removeListener(prop, handler);
             });
         }
-        for(const key of this.commands.keys()) {
-            if(key.startsWith(`${moduleName}-`)) {
-                this.commands.delete(key);
+        if(customModule.baseModifiers) {
+            for(const prop in customModule.baseModifiers) {
+                const modifier = customModule.baseModifiers[prop];
+                this.disableCommand([ prop ], modifier);
             }
+        }
+        for(const prop in customModule.commands) {
+            this.disableCommand([ moduleName ], customModule.commands[prop]);
         }
         this.modules.delete(moduleName);
     }

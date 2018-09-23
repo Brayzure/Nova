@@ -11,7 +11,7 @@ const RESOLUTION_ACTIONS = {
 };
 
 const setalert = {
-    commandName: "setalert",
+    commandName: "alert",
     description: "Sets the current channel as the alerts channel",
     permissions: [ "manageGuild" ],
     run: async function({ message, guildManager }) {
@@ -273,12 +273,14 @@ module.exports = {
         + " and dispatches them to the specified channel",
     botPermissions: [ "manageMessages" ],
     commands: {
-        setalert,
         watch,
         unwatch,
         enable,
         disable,
         watchlist
+    },
+    baseModifiers: {
+        set: setalert
     },
     ensureState: {
         enabledAlerts: [ "watchlist" ],
