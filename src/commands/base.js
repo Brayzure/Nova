@@ -227,8 +227,7 @@ module.exports = {
         enable,
         disable,
         clear,
-        set,
-        alert
+        set
     },
     ensureState: {}
 };
