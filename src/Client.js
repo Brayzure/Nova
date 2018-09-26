@@ -22,8 +22,6 @@ class Client {
         this.discordClient.on("messageReactionAdd", this.onEvent.bind(this, "messageReactionAdd"));
         this.discordClient.on("guildCreate", this.onGuildJoin.bind(this));
         this.discordClient.on("error", this.onError.bind(this));
-
-        this.watchdog.on("alert", this.onWatchdogAlert.bind(this));
     }
 
     connect() {
