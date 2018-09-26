@@ -17,9 +17,13 @@ class Client {
         }
 
         this.discordClient.on("ready", this.onReady.bind(this));
+        this.discordClient.on("guildAvailable", this.createGuildManager.bind(this));
         this.discordClient.on("messageCreate", this.onEvent.bind(this, "messageCreate"));
         this.discordClient.on("messageReactionAdd", this.onEvent.bind(this, "messageReactionAdd"));
         this.discordClient.on("guildCreate", this.onGuildJoin.bind(this));
+        this.discordClient.on("error", this.onError.bind(this));
+
+        this.watchdog.on("alert", this.onWatchdogAlert.bind(this));
     }
 
     connect() {
@@ -29,9 +33,13 @@ class Client {
     onReady() {
         logger.log("Ready, initiating guild managers");
         this.discordClient.guilds.forEach((guild) => {
-            this.guilds.set(guild.id, new GuildManager(this, guild));
+            this.createGuildManager(guild);
         });
         logger.log("All guild managers initialized");
+    }
+
+    createGuildManager(guild) {
+        this.guilds.set(guild.id, new GuildManager(this, guild));
     }
 
     onEvent(event, ...args) {
@@ -43,6 +51,11 @@ class Client {
             case "messageReactionAdd":
                 guild = args[0].channel.guild;
                 break;
+        }
+        
+        // TODO: Handle relevant guild-less events
+        if(!guild) {
+            return;
         }
         if(!this.guilds.has(guild.id)) {
             this.guilds.set(guild.id, new GuildManager(this, guild));
@@ -56,6 +69,10 @@ class Client {
         if(!this.guilds.has(guild.id)) {
             this.guilds.set(guild.id, new GuildManager(this, guild));
         }
+    }
+
+    onError(error) {
+        logger.log(error);
     }
 }
 
