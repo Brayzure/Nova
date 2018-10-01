@@ -20,6 +20,7 @@ class Client {
         this.discordClient.on("guildAvailable", this.createGuildManager.bind(this));
         this.discordClient.on("messageCreate", this.onEvent.bind(this, "messageCreate"));
         this.discordClient.on("messageReactionAdd", this.onEvent.bind(this, "messageReactionAdd"));
+        this.discordClient.on("messageDelete", this.onEvent.bind(this, "messageDelete"));
         this.discordClient.on("guildCreate", this.onGuildJoin.bind(this));
         this.discordClient.on("error", this.onError.bind(this));
     }
@@ -44,8 +45,7 @@ class Client {
         let guild;
         switch(event) {
             case "messageCreate":
-                guild = args[0].channel.guild;
-                break;
+            case "messageDelete":
             case "messageReactionAdd":
                 guild = args[0].channel.guild;
                 break;

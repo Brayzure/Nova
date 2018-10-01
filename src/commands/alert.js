@@ -224,7 +224,7 @@ async function onMessage(message) {
             channel: message.channel.id,
             id: message.id
         };
-
+        message.channel.guild.guildManager.state.alert.messageAlertMap[message.id] = newMessage.id;
         await message.channel.guild.guildManager.stateManager.saveState();
         for(const reaction of Object.values(REACTIONS)) {
             newMessage.addReaction(reaction);
@@ -232,8 +232,25 @@ async function onMessage(message) {
     }
 }
 
+async function onMessageDelete(message) {
+    const guildManager = message.channel.guild.guildManager;
+    const alertState = guildManager.state.alert;
+    if(!alertState.messageAlertMap[message.id]) {
+        return;
+    }
+    const alertMessage = await findAlertMessage(alertState.messageAlertMap[message.id], message.channel.guild);
+    if(!alertMessage) {
+        return;
+    }
+    const alertID = alertState.messageAlertMap[message.id];
+    await clearAlert(guildManager, alertID);
+    await resolveAlert(alertMessage, RESOLUTION_ACTIONS.DELETE);
+}
+
 async function clearAlert(guildManager, alertID) {
     if(guildManager.state.alert.unresolvedAlerts[alertID]) {
+        const alert = guildManager.state.alert.unresolvedAlerts[alertID];
+        delete guildManager.state.alert.messageAlertMap[alert.id];
         delete guildManager.state.alert.unresolvedAlerts[alertID];
         await guildManager.stateManager.saveState();
     }
@@ -262,6 +279,26 @@ function checkWatchlist(message) {
     return false;
 }
 
+async function findAlertMessage(id, guild) {
+    let message;
+    const alertState = guild.guildManager.state.alert;
+    const alert = alertState.unresolvedAlerts[id];
+    if(!alert) {
+        return message;
+    }
+    const channel = guild.channels.get(alertState.alertChannel);
+    if(!channel) {
+        return message;
+    }
+    try {
+        message = await channel.getMessage(id);
+    }
+    catch(err) {
+        // Don't care what the error is, important part is message var isn't modified
+    }
+    return message;
+}
+
 const alertFunctionMap = {
     watchlist: checkWatchlist
 };
@@ -286,10 +323,12 @@ module.exports = {
         enabledAlerts: [ "watchlist" ],
         alertChannel: "",
         watchlist: [],
-        unresolvedAlerts: {}
+        unresolvedAlerts: {},
+        messageAlertMap: {}
     },
     events: {
         messageCreate: onMessage,
-        messageReactionAdd: onReaction
+        messageReactionAdd: onReaction,
+        messageDelete: onMessageDelete
     }
 };
