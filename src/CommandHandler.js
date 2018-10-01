@@ -27,11 +27,13 @@ class CommandHandler {
                 throw new Error(`Can't enable module, missing permission: ${perm}`);
             }
         });
-        Object.keys(customModule.commands).forEach((commandName) => {
+        for(const commandName in customModule.commands) {
             const command = customModule.commands[commandName];
             this.enableCommand([ moduleName ], command);
-            this.commands.set(`${moduleName}-${command.commandName}`, customModule.commands[commandName]);
-        });
+        }
+        if(!this.commands.has(moduleName)) {
+            this.commands.set(moduleName, buildModuleFunction(moduleName, customModule.moduleDescription));
+        }
         if(customModule.baseModifiers) {
             Object.keys(customModule.baseModifiers).forEach((baseCommand) => {
                 this.enableCommand([ baseCommand ], customModule.baseModifiers[baseCommand]);
@@ -140,6 +142,17 @@ class CommandHandler {
         });
         return result;
     }
+}
+
+function buildModuleFunction(moduleName, description) {
+    return {
+        commandName: moduleName,
+        descripton: `Shows description for ${moduleName} module`,
+        permissions: [],
+        run: async function() {
+            return description;
+        }
+    };
 }
 
 module.exports = CommandHandler;
