@@ -270,7 +270,7 @@ module.exports = {
     moduleName: "Alerts Manager",
     moduleID: "alert",
     moduleDescription: "Manages configurable alerts and"
-        + " and dispatches them to the specified channel",
+        + " dispatches them to the specified channel",
     botPermissions: [ "manageMessages" ],
     commands: {
         watch,
