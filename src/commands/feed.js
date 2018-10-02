@@ -23,6 +23,26 @@ const create = {
     }
 };
 
+const remove = {
+    commandName: "remove",
+    description: "Removes a feed without deleting the role",
+    permissions: [ "manageGuild" ],
+    run: async function({ args, guildManager }) {
+        const roleNameMap = guildManager.state.feed.roleNameMap;
+        const roleChannelMap = guildManager.state.feed.roleChannelMap;
+        const roleName = args[0].toLowerCase();
+        if(roleNameMap[roleName]) {
+            delete roleNameMap[roleName];
+            delete roleChannelMap[roleName];
+            await guildManager.stateManager.saveState();
+            return `Removed feed **${roleName}**.`;
+        }
+        else {
+            throw new Error("Feed not found");
+        }
+    }
+};
+
 const deleteRole = {
     commandName: "delete",
     description: "Deletes a feed role",
@@ -174,6 +194,7 @@ module.exports = {
     botPermissions: [ "manageRoles" ],
     commands: {
         create,
+        remove,
         deleteRole,
         list,
         publish,
