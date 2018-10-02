@@ -111,22 +111,65 @@ const publish = {
         if(args.length < 2) {
             throw new Error("Not enough information, please provide a feed name and a message to send.");
         }
-        const roleName = args[0].toLowerCase();
-        const message = args.slice(1).join(" ");
-        const roleID = guildManager.state.feed.roleNameMap[roleName];
-        const role = guildManager.cache.roles.get(roleID);
-        if(!role) {
-            throw new Error("Role assigned to that feed can't be found, it was probably deleted. Please delete the feed and recreate it.");
+        
+        // Find all feeds to mention
+        const feeds = [];
+        let index = 0;
+        while(guildManager.state.feed.roleNameMap[args[index].toLowerCase()]) {
+            const role = guildManager.state.feed.roleNameMap[args[index].toLowerCase()];
+            const channel = guildManager.state.feed.roleChannelMap[args[index].toLowerCase()];
+            feeds.push({ name: args[index], role, channel });
+            index++;
         }
-        const channelID = guildManager.state.feed.roleChannelMap[roleName];
-        const channel = guildManager.cache.channels.get(channelID);
-        if(!channel) {
-            throw new Error("Channel assigned to that feed can't be found, it was probably deleted. Please delete the feed and recreate it.");
+
+        // Build message list for each channel
+        const messageToSend = args.slice(index).join(" ");
+        const channelMap = {};
+        for(const feed of feeds) {
+            if(!channelMap[feed.channel]) {
+                channelMap[feed.channel] = [];
+            }
+            channelMap[feed.channel].push(feed);
         }
-        await role.edit({mentionable: true});
-        await channel.createMessage(`${role.mention}: ${message}`);
-        await role.edit({mentionable: false});
-        return "Sent message to feed channel successfully.";
+
+        const messageMap = {};
+        for(const [channelID, feedRoles] of Object.entries(channelMap)) {
+            const channel = guildManager.cache.channels.get(channelID);
+            if(!channel) {
+                throw new Error(`Can't find channel assigned to feed role(s) ${feedRoles.map(f => f.name).join(", ")}`);
+            }
+            const roleMentions = feedRoles.map(f => `<@&${f.role}>`);
+            messageMap[channelID] = `${roleMentions.join(", ")}: ${messageToSend}`;
+        }
+
+        // Make all roles mentionable
+        let edited = [ /* Eris Role objects */ ];
+        for(const feed of feeds) {
+            const guildRole = guildManager.cache.roles.get(feed.role);
+            if(!guildRole) {
+                for(const role of edited) {
+                    await role.edit({ mentionable: false });
+                }
+                throw new Error(`Feed **${feed.name}** is missing its role, please recreate the feed to continue.`);
+            }
+
+            await guildRole.edit({ mentionable: true });
+            edited.push(guildRole);
+        }
+
+        // Message each channel
+        for(const [channelID, message] of Object.entries(messageMap)) {
+            const channel = guildManager.cache.channels.get(channelID);
+            await channel.createMessage(message);
+        }
+
+        // Make all roles unmentionable
+        for(const feed of feeds) {
+            const guildRole = guildManager.cache.roles.get(feed.role);
+            await guildRole.edit({ mentionable: false });
+        }
+
+        return "Sent message(s) successfully.";
     }
 };
 
