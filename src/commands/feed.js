@@ -5,21 +5,25 @@ const create = {
     run: async function({ message, args, guildManager }) {
         const guild = message.channel.guild;
         const roleName = args[0];
-        guild.roles.forEach((role) => {
-            if(role.name.toLowerCase() === roleName.toLowerCase()) {
-                throw new Error(`Role name ${roleName} is too similar to existing role ${role.name} (${role.id})`);
-            }
-        });
-        const role = await guild.createRole({
-            name: roleName,
-            permissions: 0,
-            hoist: false,
-            mentionable: false
-        });
-        guildManager.state.feed.roleNameMap[roleName.toLowerCase()] = role.id;
-        guildManager.state.feed.roleChannelMap[roleName.toLowerCase()] = message.channel.id;
-        await guildManager.stateManager.saveState();
-        return `Created new feed role **${role.name}**, you may edit the new role freely.`;
+        let role = guild.roles.find(r => r.name.toLowerCase() === roleName.toLowerCase());
+        if(!role) {
+            role = await guild.createRole({
+                name: roleName,
+                permissions: 0,
+                hoist: false,
+                mentionable: false
+            });
+            guildManager.state.feed.roleNameMap[roleName.toLowerCase()] = role.id;
+            guildManager.state.feed.roleChannelMap[roleName.toLowerCase()] = message.channel.id;
+            await guildManager.stateManager.saveState();
+            return `Created new feed role **${role.name}**, you may edit the new role freely.`;
+        }
+        else {
+            guildManager.state.feed.roleNameMap[roleName.toLowerCase()] = role.id;
+            guildManager.state.feed.roleChannelMap[roleName.toLowerCase()] = message.channel.id;
+            await guildManager.stateManager.saveState();
+            return `Bound **${roleName}** to existing role **${role.name}**. If this was in error, run \`feed remove ${roleName}\``;
+        }
     }
 };
 
