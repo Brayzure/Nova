@@ -143,7 +143,7 @@ const setPrefix = {
         if(!args[0]) {
             throw new Error("Invalid prefix, make sure you don't have extra spaces!");
         }
-        guildManager.state.prefix = args[1];
+        guildManager.state.prefix = args[0];
         await guildManager.stateManager.saveState();
         guildManager.commandHandler.prefix = args[0];
         return `Set prefix to **${args[0]}**!`;
