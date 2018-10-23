@@ -19,7 +19,7 @@ const COLORS = {
 };
 
 const MEMBER_WINDOW_WIDTH = 20;
-const CRITICAL_MEMBER_DELAY = 60 * 1000;
+const CRITICAL_MEMBER_DELAY = 45 * 1000;
 const MEMBER_ALERT_COOLDOWN = 60 * 60 * 1000;
 
 const NEW_MEMBER_DURATION = 7 * 24 * 60 * 60 * 1000;
@@ -364,7 +364,7 @@ async function checkMassJoin(guild) {
     }
 
     const sample = memberJoinDelays.slice(-1 * MEMBER_WINDOW_WIDTH);
-    const cappedSample = capArrayByMedian(sample);
+    const cappedSample = capArrayByMedian(sample, 1.5);
     const meanDelay = mean(cappedSample);
     console.log(meanDelay, CRITICAL_MEMBER_DELAY);
     if(meanDelay < CRITICAL_MEMBER_DELAY) {
@@ -463,9 +463,9 @@ module.exports = {
     }
 };
 
-function capArrayByMedian(array) {
+function capArrayByMedian(array, multiplier = 1) {
     const medianValue = median(array);
-    return array.map(e => Math.min(e, medianValue));
+    return array.map(e => Math.min(e, medianValue * multiplier));
 }
 
 function median(array) {
