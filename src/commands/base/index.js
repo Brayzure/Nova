@@ -20,7 +20,7 @@ const enable = {
         if(guildManager.state.enabledModules.includes(moduleName)) {
             throw new Error("Module is already enabled!");
         }
-        const moduleLocation = path.join(__dirname, `./${moduleName}.js`);
+        const moduleLocation = path.join(__dirname, `../${moduleName}/index.js`);
         const moduleExists = await fs.pathExists(moduleLocation);
         if(!moduleExists) {
             throw new Error("Module does not exist!");
@@ -125,7 +125,7 @@ const clear = {
         }
 
         const moduleName = args[0].toLowerCase();
-        const location = path.join(__dirname, `./${moduleName}.js`);
+        const location = path.join(__dirname, `../${moduleName}/index.js`);
         delete require.cache[require.resolve(location)];
         if(guildManager.state.enabledModules.includes(moduleName)) {
             await guildManager.commandHandler.disableCustomModule(moduleName);
@@ -161,6 +161,36 @@ const set = {
     },
     subcommands: {
         prefix: setPrefix
+    }
+};
+
+const evalCommand = {
+    commandName: "eval",
+    description: "Runs arbitrary code for debugging (developer only)",
+    permissions: [ "developer" ],
+    run: async function({ args, message, guildManager, client }) {
+        const expression = args.join(" ");
+        let msg, output;
+        try {
+            output = eval(expression);
+            if(output instanceof Promise) {
+                const now = Date.now();
+                try {
+                    const result = await output;
+                    msg = `\`\`\`js\nIn:\n${expression}\nResolved in ${Date.now() - now}ms\nOut:\n${result}\`\`\``;
+                }
+                catch (err) {
+                    msg = `\`\`\`diff\nIn:\n${expression}\nRejected in ${Date.now() - now}ms\nOut:\n-${err.toString()}\`\`\``;
+                }
+            }
+            else {
+                msg = `\`\`\`js\nIn:\n${expression}\nOut:\n${output}\`\`\``;
+            }
+        }
+        catch (err) {
+            msg = `\`\`\`diff\nIn:\n${expression}\nOut:\n-${err.toString()}\`\`\``;
+        }
+        return msg;
     }
 };
 
@@ -227,7 +257,8 @@ module.exports = {
         enable,
         disable,
         clear,
-        set
+        set,
+        eval: evalCommand
     },
     ensureState: {}
 };

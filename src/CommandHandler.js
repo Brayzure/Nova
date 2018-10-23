@@ -11,7 +11,7 @@ class CommandHandler {
     }
 
     enableBaseModule() {
-        const baseModule = require("./commands/base.js");
+        const baseModule = require("./commands/base/index.js");
         Object.values(baseModule.commands).forEach((command) => {
             this.enableCommand([], command);
             this.commands.set(command.commandName, command);
@@ -20,7 +20,7 @@ class CommandHandler {
     }
 
     async enableCustomModule(moduleName) {
-        const customModule = require(`./commands/${moduleName}.js`);
+        const customModule = require(`./commands/${moduleName}/index.js`);
         const clientMember = this.guild.cache.members.get(this.guild.client.discordClient.user.id);
         customModule.botPermissions.forEach((perm) => {
             if(!clientMember.permission.has(perm)) {

@@ -1,4 +1,5 @@
 const Eris = require("eris");
+const moment = require("moment");
 
 const REACTIONS = {
     DELETE: "🗑",
@@ -9,6 +10,23 @@ const RESOLUTION_ACTIONS = {
     DELETE: "Message was deleted",
     CLEAR: "Message was ignored"
 };
+
+const COLORS = {
+    INFO: 0x6666ff,
+    RESOLVED: 0x00ff00,
+    DELETE: 0xff0000,
+    ALERT: 0xffff00
+};
+
+const MEMBER_WINDOW_WIDTH = 20;
+const CRITICAL_MEMBER_DELAY = 60 * 1000;
+const MEMBER_ALERT_COOLDOWN = 60 * 60 * 1000;
+
+const NEW_MEMBER_DURATION = 7 * 24 * 60 * 60 * 1000;
+
+// Session variables
+const memberJoinDelays = [];
+let lastJoin, lastAlert;
 
 const setalert = {
     commandName: "alert",
@@ -168,11 +186,14 @@ async function onMessage(message) {
     const triggeredAlerts = [];
     const terms = [];
     for(const alert of enabledAlerts) {
-        const triggered = alertFunctionMap[alert](message);
-        if(triggered) {
-            triggeredAlerts.push(alert);
-            if(typeof triggered !== "boolean") {
-                terms.push(triggered);
+        const alertObject = alertFunctionMap[alert];
+        if(alertObject.event === "message") {
+            const triggered = alertObject.func(message);
+            if(triggered) {
+                triggeredAlerts.push(alert);
+                if(typeof triggered !== "boolean") {
+                    terms.push(triggered);
+                }
             }
         }
     }
@@ -192,7 +213,7 @@ async function onMessage(message) {
         const embed = {
             title: (triggeredAlerts.length === 1 ? "Alert" : "Alerts") + " Triggered",
             description,
-            color: 0xffa500,
+            color: COLORS.ALERT,
             fields: [{
                 name: "Jump Link",
                 value: jumpLink,
@@ -258,7 +279,12 @@ async function clearAlert(guildManager, alertID) {
 
 async function resolveAlert(message, actionTaken) {
     const embed = message.embeds[0];
-    embed.color = 0x00ff00;
+    if(actionTaken === RESOLUTION_ACTIONS.DELETE) {
+        embed.color = COLORS.DELETE;
+    }
+    else if(actionTaken === RESOLUTION_ACTIONS.CLEAR) {
+        embed.color = COLORS.RESOLVED;
+    }
     const resolutionField = {
         name: "Action Taken",
         value: actionTaken,
@@ -269,12 +295,104 @@ async function resolveAlert(message, actionTaken) {
     await message.edit({ embed });
 }
 
+async function onGuildMemberAdd(guild, member) {
+    const alertChannelID = guild.guildManager.state.alert.alertChannel;
+    const alertChannel = guild.channels.get(alertChannelID);
+    if(!alertChannel) {
+        return;
+    }
+    const enabledAlerts = guild.guildManager.state.alert.enabledAlerts;
+    const triggeredAlerts = [];
+    const messages = [];
+    for(const alert of enabledAlerts) {
+        const alertObject = alertFunctionMap[alert];
+        if(alertObject.event === "member") {
+            const triggered = await alertObject.func(guild, member);
+            if(triggered) {
+                triggeredAlerts.push(alert);
+                if(typeof triggered !== "boolean") {
+                    messages.push(`${alert}: ${triggered}`);
+                }
+            }
+        }
+    }
+
+    if(triggeredAlerts.length) {
+        const description = `
+            **User**: ${member.user.username}#${member.user.discriminator} (ID: ${member.user.id})
+            ${messages.length ? "**Alert Details**:\n" + messages.join("\n") : ""}
+        `
+        const embed = {
+            title: "Member Alert",
+            description,
+            color: COLORS.INFO,
+            fields: [
+                {
+                    name: `Triggered Alert${triggeredAlerts.length > 1 ? "s" : ""}`,
+                    value: triggeredAlerts.join(", "),
+                    inline: true
+                }
+            ]
+        }
+        await alertChannel.createMessage({ embed });
+    }
+}
+
 function checkWatchlist(message) {
     const watchlist = message.channel.guild.guildManager.state.alert.watchlist;
     for(const term of watchlist) {
         if(message.content.toLowerCase().includes(term)) {
             return term;
         }
+    }
+    return false;
+}
+
+async function checkMassJoin(guild) {
+    const now = Date.now();
+    if(!lastJoin) {
+        lastJoin = now;
+    }
+    else {
+        const delay = now - lastJoin;
+        memberJoinDelays.push(delay);
+        lastJoin = now;
+    }
+    console.log(memberJoinDelays.length);
+    if(memberJoinDelays.length < MEMBER_WINDOW_WIDTH / 2) {
+        return;
+    }
+
+    const sample = memberJoinDelays.slice(-1 * MEMBER_WINDOW_WIDTH);
+    const cappedSample = capArrayByMedian(sample);
+    const meanDelay = mean(cappedSample);
+    console.log(meanDelay, CRITICAL_MEMBER_DELAY);
+    if(meanDelay < CRITICAL_MEMBER_DELAY) {
+        if(!lastAlert || now - lastAlert > MEMBER_ALERT_COOLDOWN) {
+            const alertState = guild.guildManager.state.alert;
+            const alertChannelID = alertState.alertChannel;
+            const alertChannel = guild.channels.get(alertChannelID);
+            if(!alertChannel) {
+                return;
+            }
+            lastAlert = now;
+            const embed = {
+                title: "Mass Join Alert",
+                description: `Average of most recent ${MEMBER_WINDOW_WIDTH} delays is ${Math.floor(meanDelay)}ms per join`,
+                color: COLORS.INFO
+            };
+            await alertChannel.createMessage({ embed });
+            return false;
+        }
+    }
+    return false;
+}
+
+function checkNewAccount(guild, member) {
+    const now = Date.now();
+    const accountAge = now - member.createdAt;
+    if(accountAge < NEW_MEMBER_DURATION) {
+        return `Account is ${moment.duration(accountAge).humanize()} old`;
     }
     return false;
 }
@@ -300,7 +418,18 @@ async function findAlertMessage(id, guild) {
 }
 
 const alertFunctionMap = {
-    watchlist: checkWatchlist
+    watchlist: {
+        event: "message",
+        func: checkWatchlist
+    },
+    massjoin: {
+        event: "member",
+        func: checkMassJoin
+    },
+    newaccount: {
+        event: "member",
+        func: checkNewAccount
+    }
 };
 
 module.exports = {
@@ -329,6 +458,28 @@ module.exports = {
     events: {
         messageCreate: onMessage,
         messageReactionAdd: onReaction,
-        messageDelete: onMessageDelete
+        messageDelete: onMessageDelete,
+        guildMemberAdd: onGuildMemberAdd
     }
 };
+
+function capArrayByMedian(array) {
+    const medianValue = median(array);
+    return array.map(e => Math.min(e, medianValue));
+}
+
+function median(array) {
+    const arr = array.slice(0);
+    arr.sort((a, b) => b - a);
+    const middleIndex = (array.length - 1) / 2;
+    if(middleIndex === Math.floor(middleIndex)) {
+        return arr[middleIndex];
+    }
+    else {
+        return mean(arr.slice(middleIndex - 0.5, middleIndex + 0.5));
+    }
+}
+
+function mean(array) {
+    return array.reduce((a, b) => a + b, 0) / array.length;
+}
