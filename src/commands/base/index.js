@@ -168,7 +168,7 @@ const evalCommand = {
     commandName: "eval",
     description: "Runs arbitrary code for debugging (developer only)",
     permissions: [ "developer" ],
-    run: async function({ args, message, guildManager, client }) {
+    run: async function({ args, message, guildManager, client }) { // eslint-disable-line no-unused-vars
         const expression = args.join(" ");
         let msg, output;
         try {

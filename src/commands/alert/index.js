@@ -321,7 +321,7 @@ async function onGuildMemberAdd(guild, member) {
         const description = `
             **User**: ${member.user.username}#${member.user.discriminator} (ID: ${member.user.id})
             ${messages.length ? "**Alert Details**:\n" + messages.join("\n") : ""}
-        `
+        `;
         const embed = {
             title: "Member Alert",
             description,
@@ -333,7 +333,7 @@ async function onGuildMemberAdd(guild, member) {
                     inline: true
                 }
             ]
-        }
+        };
         await alertChannel.createMessage({ embed });
     }
 }
@@ -358,7 +358,6 @@ async function checkMassJoin(guild) {
         memberJoinDelays.push(delay);
         lastJoin = now;
     }
-    console.log(memberJoinDelays.length);
     if(memberJoinDelays.length < MEMBER_WINDOW_WIDTH / 2) {
         return;
     }
@@ -366,7 +365,6 @@ async function checkMassJoin(guild) {
     const sample = memberJoinDelays.slice(-1 * MEMBER_WINDOW_WIDTH);
     const cappedSample = capArrayByMedian(sample, 1.5);
     const meanDelay = mean(cappedSample);
-    console.log(meanDelay, CRITICAL_MEMBER_DELAY);
     if(meanDelay < CRITICAL_MEMBER_DELAY) {
         if(!lastAlert || now - lastAlert > MEMBER_ALERT_COOLDOWN) {
             const alertState = guild.guildManager.state.alert;
