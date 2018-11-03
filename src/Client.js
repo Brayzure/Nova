@@ -28,6 +28,7 @@ class Client {
         }
 
         this.discordClient.on("ready", this.onReady.bind(this));
+        this.discordClient.on("resume", this.onReady.bind(this));
         this.discordClient.on("guildAvailable", this.createGuildManager.bind(this));
         this.discordClient.on("guildCreate", this.onGuildJoin.bind(this));
         this.discordClient.on("error", this.onError.bind(this));
