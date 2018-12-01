@@ -5,6 +5,7 @@ const ping = {
     commandName: "ping",
     description: "Pings the bot",
     permissions: [],
+    hoisted: true,
     run: async function({ message }) {
         const shard = message.channel.guild.shard;
         return `Pong! (Latency: ${shard.latency}ms | Shard ${shard.id})`;
@@ -15,6 +16,7 @@ const enable = {
     commandName: "enable",
     description: "Enables a module",
     permissions: [ "manageGuild" ],
+    hoisted: true,
     run: async function({ args, guildManager }) {
         const moduleName = args[0].toLowerCase();
         if(guildManager.state.enabledModules.includes(moduleName)) {
@@ -36,8 +38,12 @@ const disable = {
     commandName: "disable",
     description: "Disables a module",
     permissions: [ "manageGuild" ],
+    hoisted: true,
     run: async function({ args, guildManager }) {
         const moduleName = args[0].toLowerCase();
+        if(moduleName === "base") {
+            throw new Error("Can't disable the base module, otherwise you can't re-enable it!");
+        }
         if(!guildManager.state.enabledModules.includes(moduleName)) {
             throw new Error("Module is not enabled!");
         }
@@ -53,6 +59,7 @@ const help = {
     commandName: "help",
     description: "Displays help for a module or command",
     permissions: [],
+    hoisted: true,
     run: async function({ message, args, guildManager }) {
         let embed = {};
         if(args.length === 2) {
@@ -119,6 +126,7 @@ const clear = {
     commandName: "clear",
     description: "Clears internal module cache",
     permissions: [ "developer" ],
+    hoisted: true,
     run: async function({ args, guildManager }) {
         if(!args[0]) {
             throw new Error("Please specify a module.");
@@ -139,6 +147,7 @@ const setPrefix = {
     commandName: "prefix",
     description: "Sets the guild's prefix",
     permissions: [ "manageGuild" ],
+    hoisted: true,
     run: async function({ args, guildManager }) {
         if(!args[0]) {
             throw new Error("Invalid prefix, make sure you don't have extra spaces!");
@@ -154,6 +163,7 @@ const set = {
     commandName: "set",
     description: "Modifies internal settings",
     permissions: [ "manageGuild" ],
+    hoisted: true,
     run: async function({ args }) {
         if(args.length < 2) {
             throw new Error("Improper arguments, do `set [setting] [value]`");
@@ -168,6 +178,7 @@ const evalCommand = {
     commandName: "eval",
     description: "Runs arbitrary code for debugging (developer only)",
     permissions: [ "developer" ],
+    hoisted: true,
     run: async function({ args, message, guildManager, client }) { // eslint-disable-line no-unused-vars
         const expression = args.join(" ");
         let msg, output;

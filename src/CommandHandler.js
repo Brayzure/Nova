@@ -7,29 +7,28 @@ class CommandHandler {
         this.prefix = options.state.prefix || config.prefix;
         this.commands = new Map;
         this.modules = new Map;
-        this.enableBaseModule();
-    }
-
-    enableBaseModule() {
-        const baseModule = require("./commands/base/index.js");
-        Object.values(baseModule.commands).forEach((command) => {
-            this.enableCommand([], command);
-            this.commands.set(command.commandName, command);
-        });
-        this.modules.set("base", baseModule);
     }
 
     async enableCustomModule(moduleName) {
         const customModule = require(`./commands/${moduleName}/index.js`);
         const clientMember = this.guild.cache.members.get(this.guild.client.discordClient.user.id);
+        const missingPermissions = [];
         customModule.botPermissions.forEach((perm) => {
             if(!clientMember.permission.has(perm)) {
-                throw new Error(`Can't enable module, missing permission: ${perm}`);
+                missingPermissions.push(perm);
             }
         });
+        if(missingPermissions.length) {
+            throw new Error(`Can't enable module, missing permissions: ${missingPermissions.join(", ")}`);
+        }
         for(const commandName in customModule.commands) {
             const command = customModule.commands[commandName];
-            this.enableCommand([ moduleName ], command);
+            if(command.hoisted) {
+                this.enableCommand([], command);
+            }
+            else {
+                this.enableCommand([ moduleName ], command);
+            }
         }
         if(!this.commands.has(moduleName)) {
             this.commands.set(moduleName, buildModuleFunction(moduleName, customModule.moduleDescription));
@@ -58,22 +57,24 @@ class CommandHandler {
     }
 
     async enableCommand(baseCommandArgs, command) {
-        baseCommandArgs.push(command.commandName);
-        this.commands.set(baseCommandArgs.join("-"), command);
+        const commandArgs = baseCommandArgs.slice();
+        commandArgs.push(command.commandName);
+        this.commands.set(commandArgs.join("-"), command);
         if(command.subcommands) {
-            Object.values(command.subcommands).forEach((subcommand) => {
-                this.enableCommand(baseCommandArgs, subcommand);
-            });
+            for(const subcommand of Object.values(command.subcommands)) {
+                this.enableCommand(commandArgs, subcommand);
+            }
         }
     }
 
     async disableCommand(baseCommandArgs, command) {
-        baseCommandArgs.push(command.commandName);
-        this.commands.delete(baseCommandArgs.join("-"));
+        const commandArgs = baseCommandArgs.slice();
+        commandArgs.push(command.commandName);
+        this.commands.delete(commandArgs.join("-"));
         if(command.subcommands) {
-            Object.values(command.subcommands).forEach((subcommand) => {
-                this.disableCommand(baseCommandArgs, subcommand);
-            });
+            for(const subcommand of Object.values(command.subcommands)) {
+                this.disableCommand(commandArgs, subcommand);
+            }
         }
     }
 

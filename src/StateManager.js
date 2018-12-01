@@ -3,7 +3,7 @@ const fs = require("fs-extra");
 const path = require("path");
 
 const BASE_STATE = {
-    enabledModules: []
+    enabledModules: [ "base" ]
 };
 
 class StateManager {
