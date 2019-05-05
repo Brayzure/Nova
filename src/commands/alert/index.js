@@ -123,6 +123,38 @@ const watchlist = {
     }
 };
 
+const count = {
+    commandName: "count",
+    description: "Posts how many unresolved alerts there are",
+    permissions: [ "manageMessages" ],
+    run: async function({ guildManager }) {
+        const alerts = guildManager.state.alert.unresolvedAlerts;
+        return `There are currently **${Object.keys(alerts).length}** unresolved alerts.`;
+    }
+};
+
+const list = {
+    commandName: "list",
+    description: "Lists current unresolved alerts",
+    permissions: [ "manageMessages" ],
+    run: async function({ args, guildManager }) {
+        const alerts = guildManager.state.alert.unresolvedAlerts;
+        const guildID = guildManager.cache.id;
+        const channelID = guildManager.state.alert.alertChannel;
+        const alertList = [];
+        for(const messageID of Object.keys(alerts)) {
+            alertList.push(`Link: <https://discordapp.com/channels/${guildID}/${channelID}/${messageID}>`);
+        }
+
+        let num = alertList.length;
+        if(args.length > 0 && !isNaN(args[0]) && +args[0] > 0) {
+            num = Math.floor(+args[0]);
+        }
+        const str = alertList.length ? "**Unresolved Alerts** (oldest listed first)\n" + alertList.slice(0, num).join("\n") : "*No alerts currently*";
+        return str;
+    }
+};
+
 async function onReaction(message, reaction, userID) {
     const guildManager = message.channel.guild.guildManager;
     if(!Object.values(REACTIONS).includes(reaction.name)
@@ -441,7 +473,9 @@ module.exports = {
         unwatch,
         enable,
         disable,
-        watchlist
+        watchlist,
+        count,
+        list
     },
     baseModifiers: {
         set: setalert
