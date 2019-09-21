@@ -247,6 +247,11 @@ async function onMessage(message) {
             description,
             color: COLORS.ALERT,
             fields: [{
+                name: "Channel",
+                value: message.channel.name,
+                inline: true
+            },
+            {
                 name: "Jump Link",
                 value: jumpLink,
                 inline: false
