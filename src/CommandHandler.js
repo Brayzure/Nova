@@ -52,6 +52,10 @@ class CommandHandler {
                 this.guild.registerListener(prop, event);
             });
         }
+        // Check anything else that needs to run on load
+        if(customModule.onModuleLoad) {
+            customModule.onModuleLoad(this.guild);
+        }
         
         this.modules.set(moduleName, customModule);
     }

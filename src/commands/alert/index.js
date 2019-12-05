@@ -1,5 +1,6 @@
 const Eris = require("eris");
 const moment = require("moment");
+const Watcher = require("./Watcher");
 
 const REACTIONS = {
     DELETE: "🗑",
@@ -497,6 +498,13 @@ module.exports = {
         messageReactionAdd: onReaction,
         messageDelete: onMessageDelete,
         guildMemberAdd: onGuildMemberAdd
+    },
+    onModuleLoad: (guild) => {
+        guild.alertWatcher = new Watcher(guild, 60000, 1000 * 60 * 60 * 24 * 7, async (guild, alertID) => {
+            const message = await findAlertMessage(alertID, guild.cache);
+            await resolveAlert(message, RESOLUTION_ACTIONS.CLEAR);
+            clearAlert(guild, alertID);
+        });
     }
 };
 
