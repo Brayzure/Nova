@@ -129,7 +129,7 @@ function onMessage(message) {
 function checkBlacklist(message) {
     const state =  message.channel.guild.guildManager.state;
     const channel = message.channel.id;
-    if(state.filter.blacklist.global.length === 0 && state.filter.blacklist[channel].length === 0) return false;
+    if(state.filter.blacklist.global.length === 0 && (state.filter.blacklist[channel] && state.filter.blacklist[channel].length === 0)) return false;
     const messageContent = message.content.toLowerCase();
     for(const phrase of state.filter.blacklist.global) {
         const toCheck = phrase.toLowerCase();
