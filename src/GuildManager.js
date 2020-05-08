@@ -44,6 +44,9 @@ class GuildManager extends EventEmitter {
                     embed.color = 0xff0000;
                     embed.description = err.message;
                 }
+                else {
+                    return;
+                }
             }
             if(Array.isArray(commandResult)) {
                 for(const message of commandResult) {
