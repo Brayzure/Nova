@@ -111,7 +111,7 @@ const show = {
 };
 
 function onMessage(message) {
-    //if(!message.member || message.member.permission.has("manageMessages")) return;
+    if(!message.member || message.member.permission.has("manageMessages")) return;
     const state =  message.channel.guild.guildManager.state;
     const phrase = checkBlacklist(message);
     if(phrase.length) {
