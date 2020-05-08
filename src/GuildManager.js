@@ -33,8 +33,9 @@ class GuildManager extends EventEmitter {
             const embed = {
                 color: 0x00ff00
             };
+            let commandResult;
             try {
-                const commandResult = await this.commandHandler.run(message);
+                commandResult = await this.commandHandler.run(message);
                 embed.description = commandResult;
             }
             catch (err) {
@@ -44,7 +45,13 @@ class GuildManager extends EventEmitter {
                     embed.description = err.message;
                 }
             }
-            if(embed.description) {
+            if(Array.isArray(commandResult)) {
+                for(const message of commandResult) {
+                    embed.description = message;
+                    await message.channel.createMessage({ embed });
+                }
+            }
+            else {
                 message.channel.createMessage({ embed });
             }
         }
