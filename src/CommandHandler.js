@@ -10,6 +10,7 @@ class CommandHandler {
     }
 
     async enableCustomModule(moduleName) {
+        delete require.cache[require.resolve(`./commands/${moduleName}/index.js`)];
         const customModule = require(`./commands/${moduleName}/index.js`);
         const clientMember = this.guild.cache.members.get(this.guild.client.discordClient.user.id);
         const missingPermissions = [];
